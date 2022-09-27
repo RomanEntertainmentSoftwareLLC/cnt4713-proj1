@@ -16,7 +16,6 @@ import errno
 
 timeout = 10
 max_clients = 10
-client_range = max_clients - 1
 not_stopped = False
 client_num = 0
 client = [0] * max_clients
@@ -45,6 +44,7 @@ def download_file(sock: socket, file_name: str, chunk_size: int):
             try:
                 wfile.write(data)
                 data = sock.recv(chunk_size)
+                print(data)
                 if len(data) < 1024:
                     break
             except socket.timeout as e:
@@ -72,20 +72,16 @@ def connect_client():
 
     while True:
         try:
-
+            client_num += 1
+            if client_num >= max_clients:
+                client_num = max_clients
             s.settimeout(None)
             client[client_num], address[client_num] = s.accept()
         except socket.timeout as e:
             sys.stderr.write("ERROR: Timed out on accepting client " + str(client_num) + "\n".format(e))
-            client_num += 1
-            if client_num >= client_range:
-                client_num = client_range
             continue
         except socket.error as e:
             sys.stderr.write("ERROR: Failed on accepting client " + str(client_num) + "\n".format(e))
-            client_num += 1
-            if client_num >= client_range:
-                client_num = client_range
             continue
         s.settimeout(timeout)
         print("Connection from client " + str(client_num) + " has been established at " + str(address[client_num]))
@@ -121,10 +117,6 @@ def connect_client():
             print(data)
 
             download_file(s, 'test', 1024)
-
-            client_num += 1
-            if client_num >= client_range:
-                client_num = client_range
 
 
 def lost_client():
